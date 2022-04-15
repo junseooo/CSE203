@@ -1,6 +1,3 @@
-from tkinter.messagebox import NO
-
-
 class Empty(Exception):
   """Error attempting to access an element from an empty container."""
   pass
@@ -23,12 +20,13 @@ class TreeHeap:
             return False
         
         def change_with_parent(self):
-            self._element, self._parent._element = self._parent._element, self._element
+            self._element, self._parent._element = self._parent._element, self._element            
         
     def _swap(self, node1, node2):
         """Swap the elements at indices i and j of array."""
         # IMPLEMENT HERE
         node1, node2 = node2, node1
+        return
 
     def _upheap(self, node): # when node is entering, we need to compare between node and node's parent. and repeat until node is larger than node's parent
         # IMPLEMENT HERE
@@ -40,15 +38,31 @@ class TreeHeap:
             min_node = min_node._parent
         return
 
-    def _downheap(self, node):
+    def _downheap(self, node): # entered node is changed root node
         # IMPLEMENT HERE
-        while node._element > min(node._left._element, node._right._element):
-            buffer_node = self._Node(None, None, None, None)
-            if node._left._element < node._right._element:
-                buffer_node = node._left
-            elif node._left._element > node._right._element:
-                buffer_node = node._right
-            self._swap(node, buffer_node)
+        buffer_node = self._Node(None, None, None, None)
+        buffer_node = node
+        
+        while 1:
+            if buffer_node._left is None: break
+            elif buffer_node._right is None:
+                if buffer_node._element > buffer_node._left._element:
+                    buffer_node._left.change_with_parent()
+                    break
+            elif buffer_node._element < min(buffer_node._left._element, buffer_node._right._element): break
+            else: # right and left is not empty and buffer is larger than right and left
+                # if buffer_node._element >= min(buffer_node._left._element, buffer_node._right._element):
+                    min_node = self._Node(None, None, None, None)
+                    if buffer_node._left._element < buffer_node._right._element:
+                        min_node = buffer_node._left
+                        buffer_node = min_node
+                        min_node.change_with_parent()
+                    elif buffer_node._left._element > buffer_node._right._element:
+                        min_node = buffer_node._right
+                        buffer_node = min_node
+                        min_node.change_with_parent()
+
+        return
     
     #-------------------- public
     def __init__(self):
@@ -71,6 +85,9 @@ class TreeHeap:
     def add_left(self, parent, child):
         parent._left = child
         child._parent = parent
+    
+    def change_with_root(self, node): # element change
+        node._element, self._root._element = self._root._element, node._element
 
     def add(self, key):
         """Add a key to the priority queue."""
@@ -107,6 +124,9 @@ class TreeHeap:
                             self.add_right(buffer_node, new_node)
                         else:
                             buffer_node = buffer_node._parent._right
+                            while 1:
+                                if buffer_node._left is None: break
+                                buffer_node = buffer_node._left
                             self.add_left(buffer_node, new_node)
                         break
                     buffer_node = buffer_node._parent
@@ -131,13 +151,82 @@ class TreeHeap:
         if self.is_empty():
             raise Empty('Heap is empty')
 
-        min_node = self._root
-        print('\n\n')
-        self._swap(self._root, self._last)
-        self.display()
+        elif self._last is self._root: # just root
+            buffer_node = self._Node(None, None, None, None)
+            min_node = self._root
+            self._root = buffer_node
+            return min_node._element
+        
+        else: # size(tree) > 1
+            # store mininmun value(root element) for return value
+            # change last node and root node
+            # find next last index
+            # remove last node
+            # down heap of root node
 
-        self._downheap(self._root)
-        return min_node._element
+            # store mininmun value(root element) for return value
+            min_value = self._root._element
+
+            # change last node and root node
+            self.change_with_root(self._last)
+
+            if self._size == 2:
+                self._last._parent = None
+                self._root._left = None
+                self._last = self._root
+                self._size -= 1
+
+                return min_value
+
+            else: # size > 2
+                # find next last index
+                buffer_node = self._last # buffer_node means next last index
+                while 1:
+                    if buffer_node is self._root._left:
+                        buffer_node = self._root._right
+                        while 1:
+                            if buffer_node._right is None: break
+                            buffer_node = buffer_node._right
+                        break
+
+                    elif buffer_node is self._root._right:
+                        buffer_node = self._root._left
+                        while buffer_node._right is not None:
+                            buffer_node = buffer_node._right
+                        break
+
+                    elif buffer_node.is_left_child(buffer_node) is False:
+                        buffer_node = buffer_node._parent._left
+                        while 1:
+                            if buffer_node._right is None: break
+                            buffer_node = buffer_node._right
+                        break
+
+                    buffer_node = buffer_node._parent
+                
+                # print()
+                # print()
+                # self.display()
+                
+                # remove last node
+                if self._last.is_left_child(self._last) is True:
+                    self._last._parent._left = None
+                else:
+                    self._last._parent._right = None
+                self._last._parent = None
+
+                self._last = buffer_node
+
+                
+                self._downheap(self._root)
+                
+                # print()
+                # print()
+                # self.display()
+
+                self._size -= 1
+
+                return min_value
 
     def display(self):
         self._display(self._root, 0)
@@ -157,14 +246,59 @@ class TreeHeap:
         if node._left != None:
             self._display(node._left, depth+1)
 
+
+
+import random
+
+sequence = list(range(10))
+random.shuffle(sequence)
+
+sequence1 = [7, 9, 3, 2, 5, 4, 8, 1, 0, 6]
+print(sequence1)
+print()
+
+# pq sort
 th = TreeHeap()
-for i in range(7): # 0 to 6
-    th.add(7-i)
+for item in sequence:
+    th.add(item)
 
 th.display()
 
 print(th.remove_min())
-print(th.remove_min())
-print(th.remove_min())
-
 th.display()
+print()
+print()
+print(th.remove_min())
+print(th.remove_min())
+print(th.remove_min())
+print(th.remove_min())
+print(th.remove_min())
+th.display()
+print()
+print()
+print(th.remove_min())
+th.display()
+print()
+print()
+# print(th.remove_min())
+# print(th.remove_min())
+# print(th.remove_min())
+
+# while not th.is_empty():
+#     print(th.remove_min())
+
+# print(th.remove_min())
+# th.display()
+# print()
+# print()
+
+# print(th.remove_min())
+# th.display()
+# print()
+# print()
+
+# print(th.remove_min())
+# th.display()
+# print()
+# print()
+
