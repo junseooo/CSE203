@@ -184,11 +184,3 @@ class SkipList(MutableMapping):
         newest = self._Node(k, v, predecessor, successor)      # linked to neighbors
         predecessor._next = newest
         successor._prev = newest
-    
-    def delete_node(self, node):
-        prenode = self._Node(None, None)
-        postnode = self._Node(None, None)
-
-        prenode, postnode = node._prev, node._next
-        node._prev, node._next = None, None
-        prenode._next, postnode._prev = postnode, prenode
